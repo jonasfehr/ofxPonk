@@ -17,9 +17,6 @@
 #include "PonkDefs.h"
 #include "ofMain.h"
 
-#ifndef M_PI // M_PI not defined on Windows
-#define M_PI 3.14159265358979323846
-#endif
 
 
 class ofxPonk {

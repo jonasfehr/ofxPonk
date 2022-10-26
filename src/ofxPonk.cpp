@@ -72,8 +72,8 @@ void ofxPonk::sendFrame(){
         GeomUdpHeader header;
         strncpy(header.headerString,PONK_HEADER_STRING,sizeof(header.headerString));
         header.protocolVersion = 0;
-        header.senderIdentifier = 123123; // Unique ID (so when changing name in sender, the receiver can just rename existing stream)
-        strncpy(header.senderName,"Sample Sender",sizeof(header.senderName));
+        header.senderIdentifier = 123124; // Unique ID (so when changing name in sender, the receiver can just rename existing stream)
+        strncpy(header.senderName,"openFrameworks",sizeof(header.senderName));
         header.frameNumber = frameNumber;
         header.chunkCount = chunksCount;
         header.chunkNumber = chunkNumber;
