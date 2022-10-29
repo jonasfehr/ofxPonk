@@ -24,9 +24,10 @@ public:
     void gotMessage(ofMessage msg);
     
     
-    ofxPonk ponk;
-    ofPolyline poly;
-    ofPolyline poly2;
-    ofPolyline hotspot;
+    ofxPonk ponk_1;
+    ofxPonk ponk_2;
+    ofPolyline poly_1;
+    ofPolyline poly_2;
+    ofPolyline poly_3;
 
 };
