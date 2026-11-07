@@ -54,8 +54,9 @@ void ofxPonk::add(ofPolyline poly, ofColor color, std::vector<std::pair<std::str
 }
 
 void ofxPonk::sendFrame(){
-    // Compute necessary chunk count
-    size_t chunksCount64 = 1 + fullData.size() / (PONK_MAX_DATA_BYTES_PER_PACKET-sizeof(GeomUdpHeader));
+    // Compute necessary chunk count (an empty frame still takes one chunk)
+    const size_t maxDataBytesPerChunk = PONK_MAX_DATA_BYTES_PER_PACKET-sizeof(GeomUdpHeader);
+    size_t chunksCount64 = std::max<size_t>(1, (fullData.size() + maxDataBytesPerChunk - 1) / maxDataBytesPerChunk);
     if (chunksCount64 > 255) {
         throw std::runtime_error("Protocol doesn't accept sending "
                                  "a packet that would be splitted "
@@ -72,7 +73,8 @@ void ofxPonk::sendFrame(){
     size_t written = 0;
     unsigned char chunkNumber = 0;
     unsigned char chunksCount = static_cast<unsigned char>(chunksCount64);
-    while (written < fullData.size()) {
+    // Always send at least one packet: a header-only packet tells the receiver the frame is empty
+    do {
         // Write packet header - 8 bytes
         GeomUdpHeader header;
         strncpy(header.headerString,PONK_HEADER_STRING,sizeof(header.headerString));
@@ -86,12 +88,14 @@ void ofxPonk::sendFrame(){
         
         // Prepare buffer
         std::vector<unsigned char> packet;
-        size_t dataBytesForThisChunk = std::min<size_t>(fullData.size()-written, PONK_MAX_DATA_BYTES_PER_PACKET);
+        size_t dataBytesForThisChunk = std::min<size_t>(fullData.size()-written, maxDataBytesPerChunk);
         packet.resize(sizeof(GeomUdpHeader) + dataBytesForThisChunk);
         // Write header
         memcpy(&packet[0],&header,sizeof(GeomUdpHeader));
         // Write data
-        memcpy(&packet[sizeof(GeomUdpHeader)],&fullData[written],dataBytesForThisChunk);
+        if (dataBytesForThisChunk > 0) {
+            memcpy(&packet[sizeof(GeomUdpHeader)],&fullData[written],dataBytesForThisChunk);
+        }
         written += dataBytesForThisChunk;
         
         // Now send chunk packet
@@ -102,7 +106,7 @@ void ofxPonk::sendFrame(){
         socket.sendTo(destAddr, &packet.front(), static_cast<unsigned int>(packet.size()));
         
         chunkNumber++;
-    }
+    } while (written < fullData.size());
     frameNumber++;
 }
 
@@ -214,6 +218,6 @@ int ofxPonk::ipStrToInt(std::string ip) {
     
   return    ((a << 24) & 0xFF000000) +
             ((b << 16) & 0x00FF0000) +
-            ((c >> 8) & 0x0000FF00) +
+            ((c << 8) & 0x0000FF00) +
             (d & 0x000000FF);
 }
